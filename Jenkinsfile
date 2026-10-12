@@ -4,10 +4,15 @@ pipeline {
     stages {
         stage('Deploy Nginx with Ansible') {
             steps {
-                sshagent(['local-ssh-key']) {
+                withCredentials([sshUserPrivateKey(credentialsId: 'local-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
                     sh '''
+                        echo "Configuring SSH key permissions..."
+                        chmod 400 "$SSH_KEY"
+
                         echo "Running Ansible Playbook..."
-                        ansible-playbook -i inventory.ini install_nginx.yml
+                        ansible-playbook -i inventory.ini install_nginx.yml \
+                          --private-key "$SSH_KEY" \
+                          -u "$SSH_USER"
                     '''
                 }
             }
